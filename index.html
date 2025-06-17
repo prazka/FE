@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasifikasi Jenis Ikan</title>
+    <link rel="stylesheet" href="CSS/CSS/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🐟 Fish image Classifier</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                Drag & drop gambar di sini atau klik tombol di bawah
+            </div>
+            <div style="color: #999; font-size: 0.9em; margin-bottom: 10px;">
+                Format yang didukung: JPG, PNG, GIF (Max: 10MB)
+            </div>
+            <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
+                📎 Pilih File
+            </button>
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <h4>📋 Informasi File:</h4>
+            <div class="file-details" id="fileDetails"></div>
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+            <img id="previewImage" class="preview-image" alt="Preview">
+        </div>
+
+        <div class="model-selection">
+            <h3>🧠 Pilih Model:</h3>
+            <div class="model-buttons">
+                <button class="model-btn active" data-model="resnet50" id="resnet50Btn">
+                    ResNet50
+                </button>
+                <button class="model-btn" data-model="efficientnet" id="efficientnetBtn">
+                    EfficientNet
+                </button>
+            </div>
+        </div>
+
+        <button class="predict-btn" id="predictBtn" disabled>
+            🔮 Predict
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #666;">Sedang memproses...</p>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <div class="result-text" id="resultText"></div>
+        </div>
+    </div>
+    <script src="controller/controller.js"></script>
+</body>
+</html>
