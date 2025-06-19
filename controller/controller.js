@@ -67,6 +67,8 @@ function handleFile(file) {
 
     selectedFile = file;
 
+    console.log('Selected file:', file);
+
     // Show file info
     fileDetails.innerHTML = `
         <strong>Nama:</strong> ${file.name}<br>
@@ -101,18 +103,30 @@ function predict() {
     predictBtn.disabled = true;
     resultArea.style.display = 'none';
 
+    // Convert model name to match backend expectations
+    const modelForBackend = selectedModel === 'resnet50' ? 'resnet' : 'efficientnet';
+
     // Siapkan data untuk dikirim
     const formData = new FormData();
-    formData.append('model', selectedModel);       // model: 'resnet50' atau 'efficientnet'
-    formData.append('image', selectedFile);        // file gambar
+    formData.append('image', selectedFile);
+    formData.append('model', modelForBackend);
+    
+    // Log untuk debugging - cara yang benar
+    console.log('Selected file:', selectedFile);
+    console.log('Selected model:', selectedModel);
+    console.log('Model for backend:', modelForBackend);
+    console.log('FormData image:', formData.get('image'));
+    console.log('FormData model:', formData.get('model'));
 
     // Kirim ke backend
-    fetch('http://localhost:5000/predict', {
+    fetch('http://127.0.0.1:5000/api/predict', {
         method: 'POST',
         body: formData
     })
     .then(response => {
-        if (!response.ok) throw new Error('Gagal memproses prediksi.');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         return response.json();
     })
     .then(data => {
@@ -122,7 +136,11 @@ function predict() {
 
         // Tampilkan hasil dari backend
         const results = data.predictions; // pastikan backend kirim: { predictions: [{ class, confidence }, ...] }
-
+        
+        if (!results || !Array.isArray(results)) {
+            throw new Error('Invalid response format from server');
+        }
+        
         let resultHTML = `
             <h4>🎯 Hasil Prediksi (${selectedModel.toUpperCase()}):</h4>
             <div style="margin-top: 15px;">
@@ -143,9 +161,7 @@ function predict() {
             `;
         });
 
-        resultHTML += `
-            </div>
-        `;
+        resultHTML += `</div>`;
         resultText.innerHTML = resultHTML;
         resultArea.style.display = 'block';
     })
@@ -153,6 +169,6 @@ function predict() {
         console.error('Error:', error);
         loading.style.display = 'none';
         predictBtn.disabled = false;
-        alert('Terjadi kesalahan saat mengirim data ke server.');
+        alert('Terjadi kesalahan saat mengirim data ke server: ' + error.message);
     });
-}   
+}
