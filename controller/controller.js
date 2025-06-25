@@ -124,8 +124,15 @@ function predict() {
         body: formData
     })
     .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Try to get error details from response
+            return response.text().then(text => {
+                console.log('Error response body:', text);
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
         }
         return response.json();
     })
@@ -134,11 +141,32 @@ function predict() {
         loading.style.display = 'none';
         predictBtn.disabled = false;
 
-        // Tampilkan hasil dari backend
-        const results = data.predictions; // pastikan backend kirim: { predictions: [{ class, confidence }, ...] }
+        // Handle backend response format
+        console.log('Full response from backend:', data);
+        console.log('Response type:', typeof data);
+        console.log('Response keys:', Object.keys(data));
         
-        if (!results || !Array.isArray(results)) {
-            throw new Error('Invalid response format from server');
+        let results;
+        if (data.error) {
+            // Backend returned an error
+            throw new Error(`Backend error: ${data.error}`);
+        } else if (data.predictions && Array.isArray(data.predictions)) {
+            // Format: {predictions: [{class, confidence}, ...]}
+            console.log('Using predictions array format');
+            results = data.predictions;
+        } else if (data.prediction && data.confidence !== undefined) {
+            // Format: {prediction, confidence}
+            console.log('Using single prediction format');
+            results = [{class: data.prediction, confidence: data.confidence}];
+        } else if (data.class && data.confidence !== undefined) {
+            // Format: {class, confidence} - This is what your backend actually returns!
+            console.log('Using class/confidence format');
+            results = [{class: data.class, confidence: data.confidence}];
+        } else {
+            // Log the actual data structure for debugging
+            console.error('Unexpected response structure:', data);
+            console.error('Available keys:', Object.keys(data));
+            throw new Error(`Invalid response format from server. Received: ${JSON.stringify(data)}`);
         }
         
         let resultHTML = `
@@ -166,9 +194,23 @@ function predict() {
         resultArea.style.display = 'block';
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Full error object:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
         loading.style.display = 'none';
         predictBtn.disabled = false;
-        alert('Terjadi kesalahan saat mengirim data ke server: ' + error.message);
+        
+        // More specific error messages
+        if (error.message.includes('HTTP error')) {
+            alert('Server error: ' + error.message + '\n\nCheck the browser console for more details.');
+        } else if (error.message.includes('Backend error')) {
+            alert('Classification error: ' + error.message);
+        } else if (error.message.includes('Invalid response format')) {
+            alert('Response format error: ' + error.message + '\n\nCheck the browser console for the full response.');
+        } else {
+            alert('Unexpected error: ' + error.message + '\n\nCheck the browser console for more details.');
+        }
     });
 }
